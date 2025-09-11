@@ -1,6 +1,5 @@
 flask
 gunicorn
 arxiv
-sqlite3 
 requests
 langchain
