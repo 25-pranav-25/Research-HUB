@@ -1,6 +1,8 @@
 from flask import Flask, jsonify, request, send_from_directory, abort
 from db_utils import list_papers, get_full_paper
 import os
+import subprocess
+
 
 app = Flask(__name__, static_folder=".", template_folder=".")
 
@@ -61,6 +63,30 @@ def api_paper_detail(paper_id):
     if not data:
         return jsonify({"error": "Paper not found"}), 404
     return jsonify(data)
+
+ ------------------------
+# New Route: Trigger main.py --fetch
+# ------------------------
+
+@app.route("/api/fetch", methods=["POST"])
+def api_fetch():
+    """Trigger main.py with --fetch flag."""
+    try:
+        result = subprocess.run(
+            ["python", "main.py", "--fetch"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return jsonify({
+            "status": "success",
+            "output": result.stdout
+        })
+    except subprocess.CalledProcessError as e:
+        return jsonify({
+            "status": "error",
+            "error": e.stderr
+        }), 500
 
 # ------------------------
 # Main
