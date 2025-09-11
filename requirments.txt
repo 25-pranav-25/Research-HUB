@@ -1,0 +1,6 @@
+flask
+gunicorn
+arxiv
+sqlite3-bro 
+requests
+langchain

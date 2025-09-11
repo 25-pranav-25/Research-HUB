@@ -1,0 +1,284 @@
+/* Fonts & Base */
+body {
+  font-family: 'Roboto', sans-serif;
+  margin: 0;
+  background: #f7f9fc;
+  color: #333;
+}
+
+h1, h2 {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Header */
+header {
+  background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  padding: 1rem 2rem;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+/* Search & Sort Bar */
+.search-sort-bar {
+  margin-top: 1rem;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.search-sort-bar input,
+.search-sort-bar select {
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  width: 250px;
+}
+
+/* Paper Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+/* Cards */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+.card h3 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  color: #2575fc;
+}
+
+.card p {
+  font-size: 0.95rem;
+  color: #555;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+.card a {
+  display: inline-block;
+  margin-top: 8px;
+  text-decoration: none;
+  font-weight: bold;
+  color: #6a11cb;
+  transition: color 0.2s ease;
+}
+
+.card a:hover {
+  color: #2575fc;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  gap: 10px;
+}
+
+.pagination button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: #2575fc;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #1252c0;
+}
+
+.pagination button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Paper Detail Page */
+.paper-detail {
+  padding: 2rem;
+}
+
+.paper-detail section {
+  margin-bottom: 2rem;
+}
+
+/* Summaries */
+#longSummary {
+  line-height: 1.6;
+  margin-top: 10px;
+}
+
+#longSummary strong,
+.card p strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 1rem;
+  color: #2575fc;
+}
+
+/* Entities */
+.entities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.entity-tag {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: white;
+}
+
+.entity-Dataset { background: #ff9800; }
+.entity-Model { background: #4caf50; }
+.entity-Method { background: #2196f3; }
+.entity-Tool { background: #9c27b0; }
+.entity-Institution { background: #f44336; }
+.entity-PERSON { background: #e91e63; }
+.entity-ORG { background: #3f51b5; }
+.entity-LOC { background: #009688; }
+.entity-DATE { background: #795548; }
+
+/* PDF Link Button */
+.pdf-link {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px 16px;
+  background: #e53935;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background 0.2s ease;
+}
+
+.pdf-link:hover {
+  background: #c62828;
+}
+
+/* Mindmap */
+.mindmap-graph {
+  width: 100%;
+  height: 500px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: white;
+  margin-top: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+.node circle {
+  stroke: #fff;
+  stroke-width: 2px;
+  fill: #2575fc;
+  cursor: pointer;
+}
+
+.node circle.collapsed {
+  fill: #ff7f50; /* orange for collapsed nodes */
+}
+
+.node text {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.9rem;
+  fill: #333;
+}
+
+.link {
+  stroke: #ccc;
+  stroke-width: 2px;
+  fill: none;
+}
+
+
+
+/* Toggle Button */
+#darkModeToggle {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 20px;
+  background: #fff;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+#darkModeToggle:hover {
+  background: #ddd;
+}
+
+/* Dark Mode */
+body.dark-mode {
+  background: #121212;
+  color: #eee;
+}
+
+body.dark-mode header {
+  background: linear-gradient(90deg, #0f0f0f 0%, #222 100%);
+  color: #fff;
+}
+
+body.dark-mode .card {
+  background: #1e1e1e;
+  color: #eee;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+}
+body.dark-mode .card h3 {
+  color: #82aaff;
+}
+body.dark-mode .card a {
+  color: #ff7f50;
+}
+
+body.dark-mode .pagination button {
+  background: #333;
+  color: #eee;
+}
+body.dark-mode .pagination button:disabled {
+  background: #555;
+}
+
+body.dark-mode .pdf-link {
+  background: #d32f2f;
+}
+body.dark-mode .pdf-link:hover {
+  background: #9a0007;
+}
+
+body.dark-mode .mindmap-graph {
+  background: #1e1e1e;
+  border-color: #444;
+}
+body.dark-mode .node text {
+  fill: #eee;
+}
+body.dark-mode .link {
+  stroke: #666;
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paper Details</title>
+  <link rel="stylesheet" href="/styles.css">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <header>
+    <h1 id="paperTitle">Loading...</h1>
+    <a id="paperLink" class="pdf-link" href="#" target="_blank">
+  <i class="fa-solid fa-file-pdf"></i> 🔗 View Full PDF
+</a>
+  <h1>Research Paper Dashboard</h1>
+  <button id="darkModeToggle">🌙 Dark Mode</button>
+  </header>
+
+  <main class="paper-detail">
+    <section>
+      <h2>📖 Long Summary</h2>
+      <p id="longSummary">Loading...</p>
+    </section>
+
+    <section>
+      <h2>📊 Key Facts</h2>
+      <ul id="factsList"></ul>
+    </section>
+
+    <section>
+      <h2>🔎 Entities</h2>
+      <div id="entitiesList" class="entities"></div>
+    </section>
+
+    <section>
+  <h2>🧠 Mindmap</h2>
+  <div id="mindmapContainer" class="mindmap-graph"></div>
+</section>
+
+  </main>
+
+  <script src="/script.js"></script>
+  <!-- D3.js CDN -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+</body>
+</html>
