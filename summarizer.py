@@ -1,6 +1,5 @@
 import json
 from typing import Dict, List
-from langgraph.graph import StateGraph, END
 from langchain_google_genai import ChatGoogleGenerativeAI
 from google import genai
 from google.genai import types
@@ -25,7 +24,7 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.2,
 )
 
-# ---- LangGraph State ----
+# ---- State ----
 class PaperState(Dict):
     paper_id: int
     title: str
@@ -36,17 +35,18 @@ class PaperState(Dict):
     mindmap: str
 
 
-# --- Nodes ---
-def summarize_node(state: PaperState):
+# -------------------
+# Tool Functions
+# -------------------
+def summarize_tool(state: PaperState):
     prompt = f"""
 You are an expert AI research summarizer.
 
 Task:
 1. Search the web for this paper (use title/URL).
 2. Write:
-   - **Short summary** (≤3 sentences, quick preview).
-   - **Long summary** (2–3 paragraphs, plain English, covering motivation, methods, findings).
-3. Use only grounded evidence. Avoid hallucinations.
+   - **Short summary** (≤3 sentences).
+   - **Long summary** (2–3 paragraphs, covering motivation, methods, findings).
 
 Title: {state['title']}
 Abstract: {state['abstract']}
@@ -54,7 +54,6 @@ Abstract: {state['abstract']}
     resp = llm.invoke([{"role": "user", "content": prompt}])
     text = resp.content.strip()
 
-    # Split heuristically
     if "Long Summary:" in text:
         parts = text.split("Long Summary:")
         short = parts[0].replace("Short Summary:", "").strip()
@@ -68,13 +67,9 @@ Abstract: {state['abstract']}
     return state
 
 
-def facts_node(state: PaperState):
+def facts_tool(state: PaperState):
     prompt = f"""
-You are an AI fact extractor.
-
-Steps:
-1. Search the web for the given paper (title/URL).
-2. Extract **key research facts** as JSON array of objects with "type" and "value".
+Extract **key research facts** as JSON array of objects with "type" and "value".
 
 Fact types required:
 - Problem
@@ -82,11 +77,6 @@ Fact types required:
 - Key Result
 - Limitation
 - Why it matters
-
-Rules:
-- Keep each value 1–2 sentences max.
-- Be precise (include numbers/datasets when available).
-- Do NOT copy summaries.
 
 Title: {state['title']}
 Abstract: {state['abstract']}
@@ -99,23 +89,13 @@ Abstract: {state['abstract']}
     return state
 
 
-def entities_node(state: PaperState):
+def entities_tool(state: PaperState):
     prompt = f"""
-You are an AI entity extractor.
+Identify explicit technical entities from this paper.
 
-Steps:
-1. Search the web for this paper (title/URL).
-2. Identify **explicit technical entities**.
-3. Return JSON array of objects with:
-   - "entity": name
-   - "type": one of ["Dataset","Model","Method","Tool","Institution"]
-
-Examples:
-[
-  {{"entity":"ResNet-50","type":"Model"}},
-  {{"entity":"CIFAR-10","type":"Dataset"}},
-  {{"entity":"Reinforcement Learning","type":"Method"}}
-]
+Return JSON array of objects:
+- "entity": name
+- "type": one of ["Dataset","Model","Method","Tool","Institution"]
 
 Title: {state['title']}
 Abstract: {state['abstract']}
@@ -128,13 +108,9 @@ Abstract: {state['abstract']}
     return state
 
 
-def mindmap_node(state: PaperState):
+def mindmap_tool(state: PaperState):
     prompt = f"""
-You are an AI mindmap generator.
-
-Steps:
-1. Search the web for this paper (title/URL).
-2. Build a **hierarchical JSON mindmap**.
+Generate a **hierarchical JSON mindmap**.
 
 Schema:
 {{
@@ -145,8 +121,7 @@ Schema:
 Rules:
 - Root: Paper Title
 - Children: Problem, Motivation, Approach, Experiments, Results, Applications, Limitations, Future Work
-- Each child can have nested nodes (keep labels 3–7 words).
-- Be concise & factual.
+- Keep labels 3–7 words.
 
 Title: {state['title']}
 Abstract: {state['abstract']}
@@ -156,23 +131,59 @@ Abstract: {state['abstract']}
     return state
 
 
-# --- Graph ---
-graph = StateGraph(PaperState)
-graph.add_node("summarize", summarize_node)
-graph.add_node("facts", facts_node)
-graph.add_node("entities", entities_node)
-graph.add_node("mindmap", mindmap_node)
-
-graph.set_entry_point("summarize")
-graph.add_edge("summarize", "facts")
-graph.add_edge("facts", "entities")
-graph.add_edge("entities", "mindmap")
-graph.add_edge("mindmap", END)
-
-pipeline = graph.compile()
+# -------------------
+# ReAct Agent Loop
+# -------------------
+TOOLS = {
+    "summarize": summarize_tool,
+    "facts": facts_tool,
+    "entities": entities_tool,
+    "mindmap": mindmap_tool,
+    "finish": lambda s: s
+}
 
 
-# ---- Core Runner ----
+def agent_loop(state: PaperState):
+    while True:
+        # Ask model what to do next
+        prompt = f"""
+You are an Agentic AI assistant for summarizing research papers.
+
+Paper: {state['title']}
+
+Available tools: {list(TOOLS.keys())}
+
+Current state:
+- Summaries: {bool(state.get("summaries"))}
+- Facts: {len(state.get("facts", []))}
+- Entities: {len(state.get("entities", []))}
+- Mindmap: {bool(state.get("mindmap"))}
+
+Think step by step. Which tool should you call next?
+Answer ONLY in JSON: {{"action": "<tool_name>"}}
+"""
+        resp = llm.invoke([{"role": "user", "content": prompt}])
+        try:
+            decision = json.loads(resp.content)
+            action = decision.get("action", "finish")
+        except:
+            action = "finish"
+
+        if action not in TOOLS:
+            action = "finish"
+
+        if action == "finish":
+            break
+
+        # Run the chosen tool
+        state = TOOLS[action](state)
+
+    return state
+
+
+# -------------------
+# Core Runner
+# -------------------
 def _summarize_and_store(paper_id: int):
     conn = get_connection()
     cur = conn.cursor()
@@ -185,20 +196,26 @@ def _summarize_and_store(paper_id: int):
         return
 
     pid, title, authors, abstract, pdf = row
-    print(f"\n>>> Summarizing: {title[:60]}...")
+    print(f"\n>>> Processing: {title[:60]}...")
 
-    state = {"paper_id": pid, "title": title, "abstract": abstract, "pdf_url": pdf}
-    final = pipeline.invoke(state)
+    state = {"paper_id": pid, "title": title, "abstract": abstract, "pdf_url": pdf,
+             "summaries": {}, "facts": [], "entities": [], "mindmap": ""}
+
+    final = agent_loop(state)
 
     # Save into DB
-    upsert_summaries(pid, final["summaries"]["short"], final["summaries"]["long"])
-    facts = [(f["type"], f["value"]) for f in final["facts"] if "type" in f and "value" in f]
-    replace_facts(pid, facts)
-    entities = [(e["entity"], e["type"]) for e in final["entities"] if "entity" in e and "type" in e]
-    upsert_entities(pid, entities)
-    upsert_mindmap(pid, final["mindmap"])
+    if final["summaries"]:
+        upsert_summaries(pid, final["summaries"]["short"], final["summaries"]["long"])
+    if final["facts"]:
+        facts = [(f["type"], f["value"]) for f in final["facts"] if "type" in f and "value" in f]
+        replace_facts(pid, facts)
+    if final["entities"]:
+        entities = [(e["entity"], e["type"]) for e in final["entities"] if "entity" in e and "type" in e]
+        upsert_entities(pid, entities)
+    if final["mindmap"]:
+        upsert_mindmap(pid, final["mindmap"])
 
-    print(f"✔️ Done summarizing {title[:40]}...")
+    print(f"✔️ Done processing {title[:40]}...")
 
 
 def process_papers(limit=3):
